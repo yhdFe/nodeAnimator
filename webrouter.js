@@ -20,6 +20,10 @@ router.get('/project_list', function (req, res) {
     res.render('project_list');
 });
 
+router.get('/project_add', function (req, res) {
+    res.render('project_add');
+});
+
 router.post('/project/:myfun', function (req, res) {
     projectController[req.params.myfun](req, res);
 });
