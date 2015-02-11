@@ -11,9 +11,13 @@ exports.showlist = function (req, res) {
     } else {
         var img_src = "../public/project/" + id + "/";
         var img_json_src = img_src + 'list.json';
-        var img_json = require(img_json_src);
         if (fs.existsSync(img_src)) {
-            if (fs.statSync(img_json_src).size === 0)img_json = "[]";
+            if (fs.existsSync(img_json_src)) {
+                var img_json = fs.readFileSync(img_json_src).toString();
+                if (fs.statSync(img_json_src).size === 0)img_json = [];
+            } else {
+                img_json = [];
+            }
             myjson.ret = '0';
             myjson.msg = 'success';
             myjson.img_list = img_json;

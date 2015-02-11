@@ -12,6 +12,7 @@ exports.showlist = function (req, res) {
 };
 
 exports.read = function (req, res) {
+	console.log(req.body);
     var id = req.body.id;
     var myjson = {};
     if (req.body.id === undefined) {
@@ -43,45 +44,43 @@ exports.save = function (req, res) {
     var myjson = {};
     var id = req.body.id;
     var project_data = req.body.project_data;
-    /* if(id === undefined || project_data===''){
-     myjson.ret = '1';
-     myjson.msg = 'parm error';
-     }else{
-     var project_src = "../public/project/" + id + "/";
-     var project_data_json=[];
-     var project_json_src=project_src+"project.json";
-     if(file_exists($project_src)){
 
-     $project_list_array=@file_get_contents("project/project_list.json");
-     if($project_list_array=="")$project_list_array="{\"count\":0,\"data\":[]}";
-     $project_list_obj=json_decode($project_list_array);
-     foreach($project_list_obj->data as $project_info){
-
-     if($project_info->id==$id){
-     $project_info->saveflag=1;
-     $project_info->time_save=$project_data->project_info->time_save;
-     }
-     }
-     file_put_contents("project/project_list.json",json_encode($project_list_obj));
-
-     @mkdir("project/".$project_list_obj->count);
-
-     file_put_contents("project/".$project_list_obj->count."/project.json",$project_data);
-
-     file_put_contents($project_json_src,json_encode($project_data));
-     $page=$this->export();
-     if($page!="")$ret['page']=$page;
-     $ret['ret']='0';
-     $ret['msg']="success";
-
-     }
-     else{
-     $ret['ret']='2';
-     $ret['msg']="failed";
-     }
-     }*/
+    //检验id 和 project_data 是否存在
+    if (req.body.id === '' || project_data == '') {
+        myjson.ret = '1';
+        myjson.msg = 'parm error';
+    } else {
+        //检验项目下project.json是否存在
+        if (fs.existsSync('../public/project/project_list.json')) {
+            var project_list = JSON.parse(fs.readFileSync('../public/project/project_list.json').toString());
+            for (var i in project_list.data) {
+                if (project_list.data[i].id == id) {
+                    //获取project_list.json 修改 saveflag = 1 和修改时间
+                    project_list.data[i].saveflag = 1;
+                    project_list.data[i].time_save = new Date().getTime().toString();
+                    break;
+                }
+            }
+            //写入获取project_list
+            fs.writeFileSync('../public/project/project_list.json', JSON.stringify(project_list));
+            //创建 id dir 并将project_data写入到项目中project.json
+            var dir = "../public/project/" + id;
+            fs.writeFileSync(dir + '/project.json', JSON.stringify(JSON.parse(project_data)));
+            var page = exportit();
+            if (page != "")myjson['page'] = page;
+            myjson['ret'] = '0';
+            myjson['msg'] = "success";
+        } else {
+            myjson['ret'] = '2';
+            myjson['msg'] = "failed";
+        }
+    }
     res.send(myjson);
 };
+
+function exportit(){
+
+}
 
 exports.add = function (req, res) {
     var project_name = req.body['project_name'];
@@ -124,10 +123,14 @@ exports.add = function (req, res) {
             }
         };
         //将数据写入 project.json
-        console.log(project_data);
-        fs.writeFileSync('project.json', project_data);
+        fs.writeFileSync(dir + '/project.json', JSON.stringify(project_data));
         //count +1写入list
+        myjson['id'] = project_list_array.count;
+        project_list_array.count++;
+        fs.writeFileSync('../public/project/project_list.json', JSON.stringify(project_list_array));
+        myjson['ret'] = '0';
+        myjson['msg'] = "success";
     }
-
+    res.send(myjson);
 };
 
